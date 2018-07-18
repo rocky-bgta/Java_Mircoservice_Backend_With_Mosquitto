@@ -69,9 +69,7 @@ public abstract class Core {
     public static final ThreadLocal<ClientMessage> clientMessage = new ThreadLocal<>();
     public static final ThreadLocal<String> userId = new ThreadLocal<>();
     public static final ThreadLocal<Integer> businessId = new ThreadLocal<>();
-    //public static final ThreadLocal<Boolean> isCommonApi = new ThreadLocal<>();
     public static final ThreadLocal<String> userDataBase = new ThreadLocal<>();
-    //public static final ThreadLocal<Boolean> commonDataBase = new ThreadLocal<>();
     public static final ThreadLocal<String> requestToken = new ThreadLocal<>();
 
 
@@ -299,7 +297,7 @@ public abstract class Core {
         Map<Object, Object> keyValueParisForWhereCondition;
         Map<Object, Object> keyValuePairsForUpdate;
         Map<Object, Object> keyValuePairsWhereConditionForDelete;
-        StringBuilder query = null;
+        StringBuilder query;
         try {
             Class clazz = Core.runTimeEntityType.get();
             if (entityName == null) {
@@ -440,27 +438,6 @@ public abstract class Core {
         return finalList;
     }
 
-    public static <M> List<M> getResponseList(ResponseMessage responseMessage, Class clazz) throws Exception {
-        List<M> finalList = new ArrayList<>();
-        List tempList;
-        try {
-            if (responseMessage.responseObj != null) {
-                tempList = (List) responseMessage.responseObj;
-                if (tempList.size() > 0) {
-                    for (Object object : tempList) {
-                        object = Core.modelMapper.map(object, clazz);
-                        finalList.add((M) object);
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            log.error("Exception from Core getResponseList method");
-            throw ex;
-        }
-        return finalList;
-    }
-
     public static <M> M interModuleCommunication(String publishedTopic, String serviceUrl, Object requestObject, Class responseObjectClass){
 
         CyclicBarrier barrier;
@@ -480,9 +457,8 @@ public abstract class Core {
             SubscriberForWorker subForWorker = new SubscriberForWorker(requestMessage.brokerMessage.messageId, barrier);
             mqttClient = subForWorker.subscribe();
             callBackForIMC = subForWorker.getCallBack();
-            PublisherForWorker pubForWorkerGetUserList = new PublisherForWorker(publishedTopic, mqttClient);
-            pubForWorkerGetUserList.publishedMessageToWorker(requestMessage);
-
+            PublisherForWorker publisherForWorker = new PublisherForWorker(publishedTopic, mqttClient);
+            publisherForWorker.publishedMessageToWorker(requestMessage);
 
             synchronized (lock) {
                 long startTime = System.nanoTime();
